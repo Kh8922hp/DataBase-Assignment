@@ -1,0 +1,191 @@
+USE db1;
+CREATE TABLE IF NOT EXISTS WARD_INFO ( # normal 
+    WardNum VARCHAR(2) CHECK (17 >= WardNum > 0) PRIMARY KEY UNIQUE,
+    WardName VARCHAR(30) UNIQUE,
+    Location VARCHAR(10),
+    TotalBeds INT CHECK (240 >= TotalBeds >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS WARD_CONTACT (
+	ExtnNum INT(10) PRIMARY KEY,
+    WardNum VARCHAR(2) CHECK (17 >= WardNum > 0) UNIQUE REFERENCES WARD_INFO (WardNum)
+);
+
+CREATE TABLE IF NOT EXISTS STAFF_INFO (
+    StaffNo INT UNIQUE PRIMARY KEY,
+    StaffName VARCHAR(60) NOT NULL,
+    StaffAddress VARCHAR(60),
+    StaffTelephoneNum VARCHAR(20),
+    StaffDOB DATE,
+    Sex ENUM('Male', 'Female', 'Nonbinary', 'Other', 'Prefer not to answer'),
+    NIN VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS STAFF_QUALIFICATION (
+    StaffNo INT REFERENCES STAFF_INFO(StaffNo),
+    StaffName VARCHAR(60) NOT NULL REFERENCES STAFF_INFO(StaffName),
+    QualType varchar(60),
+    QualDate date,
+    Instituition varchar(60)
+);
+
+CREATE TABLE IF NOT EXISTS STAFF_EMPLOYMENT (
+	StaffNo INT REFERENCES STAFF_INFO(StaffNo),
+    StaffName VARCHAR(60) NOT NULL REFERENCES STAFF_INFO(StaffName),
+    PositionHeld VARCHAR(30),
+    AllocatedWard VARCHAR(2) REFERENCES WARD (WardNum),
+    CurrentSalary INT,
+    HoursPerWeek FLOAT(4),
+    PaidWeeklyOrMonthly ENUM('W', 'M'),
+    PermanentOrTemporary ENUM('P', 'T')
+);
+
+CREATE TABLE IF NOT EXISTS STAFF_ALLOCATION (
+    StaffNo INT(4) REFERENCES STAFF_INFO (StaffNo),
+    StaffName VARCHAR(60) NOT NULL REFERENCES STAFF_INFO(StaffName),
+    ChargeNurse VARCHAR(60),
+    PositionHeld VARCHAR(60),
+    Shift VARCHAR(60)
+);
+
+CREATE TABLE IF NOT EXISTS PATIENT (
+    PatientNo INT AUTO_INCREMENT UNIQUE NOT NULL PRIMARY KEY,
+    PatientName VARCHAR(60) NOT NULL,
+    PatientAddress VARCHAR(60),
+    PatientNum VARCHAR(60),
+    DateOfBirth DATE,
+    Sex ENUM('Male', 'Female', 'Nonbinary', 'Other', 'Prefer not to answer'),
+    MartialStatus ENUM('Single', 'Married'),
+    RegisterDate DATE
+);
+
+CREATE TABLE IF NOT EXISTS NEXT_OF_KIN_Details (
+    FullName VARCHAR(60),
+    Relationship VARCHAR(30),
+    Address VARCHAR(100),
+    TelephoneNo VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS LOCAL_DOCTOR_DETAILS (
+    ClinicNo VARCHAR(5) UNIQUE PRIMARY KEY,
+    FullName VARCHAR(60),
+    Address VARCHAR(100),
+    TelephoneNo VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS PATIENT_APPOINTMENT ( # Normal Forms
+    AppointmentNum INT AUTO_INCREMENT UNIQUE PRIMARY KEY,
+    AppointmentDate DATE,
+    AppointmentTime TIME,
+    ExaminationRoom VARCHAR(60)
+);
+
+CREATE TABLE IF NOT EXISTS PATIENT_APPOINTMENT_ALLOCATION (
+	AppointmentNum INT AUTO_INCREMENT UNIQUE REFERENCES PATIENT_APPOINTMENT (AppointmentNum),
+    ExaminationRoom VARCHAR(60),
+    IsWaitingList BOOL,
+    IsOutPatient BOOL
+);
+
+CREATE TABLE IF NOT EXISTS APPOINTMENT_STAFF (
+	StaffName VARCHAR(60) REFERENCES staff (StaffName),
+    StaffNo INT REFERENCES staff (StaffNo)
+);
+
+CREATE TABLE IF NOT EXISTS OUTPATIENT (
+    PatientNo INT REFERENCES PATIENT(PatientNo),
+    PatientName VARCHAR(60),
+    PatientAddress VARCHAR(60),
+    PatientNumber VARCHAR(60),
+    DateOfBirth DATE,
+    Sex ENUM('Male', 'Female', 'Nonbinary', 'Other', 'Prefer not to answer')
+);
+
+CREATE TABLE IF NOT EXISTS OUTPATIENT_APPOINTMENT (
+	PatientNo INT REFERENCES PATIENT(PatientNo),
+	AppointmentDate DATE REFERENCES Patient_Appointment (AppointmentDate),
+    AppointmentTime TIME REFERENCES Patient_Appointment (AppointmentDate)
+);
+
+CREATE TABLE IF NOT EXISTS INPATIENT (
+    PatientNo INT REFERENCES PATIENT (PatientNo),
+    PatientName VARCHAR(60) REFERENCES PATIENT(PatientNo),
+    BedNumber INT(3) UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS INPATIENT_STAY_TIME (
+	PatientNo INT REFERENCES PATIENT (PatientNo),
+    OnWaitingList DATE,
+    ExpectedStay INT(1),
+    DatePlaced DATE,
+    DateLeave DATE,
+    ActualLeave DATE
+);
+
+CREATE TABLE IF NOT EXISTS PATIENT_MEDICATION ( 
+    DrugNo INT(5) PRIMARY KEY,
+    DrugName VARCHAR(30),
+    PatientName VARCHAR(60) REFERENCES PATIENT_ALLOCATION (PatientName),
+    Descript VARCHAR(20),
+    Dosage VARCHAR(20),
+    MethodOfAdmin VARCHAR(4),
+    UnitsPerDay INT(2)
+);
+
+CREATE TABLE IF NOT EXISTS PATIENT_MEDICATION_START_AND_END (
+	DrugNo INT(5) REFERENCES PATIENT_MEDICATION(DrugNo),
+    StartDate DATE,
+    FinishDate DATE
+);
+
+CREATE TABLE IF NOT EXISTS SUPPLIES ( 
+    ItemNum INT NOT NULL AUTO_INCREMENT UNIQUE PRIMARY KEY,
+    ItemName VARCHAR(60),
+    ItemDesc VARCHAR(120),
+    StockQuantity INT,
+    ReorderLevel INT,
+    CostPerUnit FLOAT
+);
+
+CREATE TABLE IF NOT EXISTS PHARMA_SUPPLIES (
+    DrugNo INT(5) PRIMARY KEY NOT NULL UNIQUE REFERENCES PATIENT_MEDICATION (Drugno),
+    DrugName VARCHAR(30) REFERENCES PATIENT_MEDICATION (DrugName),
+    Descript VARCHAR(20) REFERENCES PATIENT_MEDICATION (Descript),
+    Dosage VARCHAR(20) REFERENCES PATIENT_MEDICATION (Dosage),
+    MethodOfAdmin VARCHAR(4) REFERENCES PATIENT_MEDICATION (MethodOfAdmin),
+    StockQuantity INT,
+    ReorderLevel INT,
+    CostPerUnit FLOAT
+);
+
+CREATE TABLE IF NOT EXISTS REQUISITION ( 
+    ReqNo INT PRIMARY KEY UNIQUE NOT NULL,
+    DrugNo INT(5) REFERENCES PATIENT_MEDICATION (DrugNo),
+    Descript VARCHAR(20) REFERENCES PATIENT_MEDICATION (Descript),
+    Dosage VARCHAR(20) REFERENCES PATIENT_MEDICATION (Dosage),
+    MethodOfAdmin VARCHAR(4) REFERENCES PATIENT_MEDICATION (MethodOfAdmin),
+    CostPerUnit FLOAT(10),
+    Quantity INT(4)
+);
+
+CREATE TABLE IF NOT EXISTS REQUISTION_REQUEST (
+	StaffName VARCHAR(60) REFERENCES STAFF (StaffName),
+	WardNum INT REFERENCES WARD (wardnum),
+	WardName VARCHAR(30) REFERENCES WARD (wardname),
+    ReqNo INT UNIQUE NOT NULL REFERENCES REQUISTION (ReqNo)
+);
+
+CREATE TABLE IF NOT EXISTS REQUISITION_SIGNED (
+	ReqNo INT UNIQUE NOT NULL REFERENCES REQUISTION (ReqNo),
+    OrderDate DATE,
+    ChargeNurseSign BOOL,
+    SignDate DATE
+);
+
+CREATE TABLE IF NOT EXISTS SUPPLIER (
+    SupplierNum INT NOT NULL AUTO_INCREMENT UNIQUE PRIMARY KEY,
+    SupplierName VARCHAR(30),
+    SupplierAddress VARCHAR(30),
+    SupplierTelephone VARCHAR(20),
+    SupplierFax INT
+);
